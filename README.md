@@ -41,9 +41,9 @@ src/
     manifest.py     #   machine-readable download status + failure log
     downloader.py   #   resumable bulk orchestration
   features/         # shared game-state + possession engine (Phase 3 complete)
-  models/           # PyTorch model, training, evaluation    (Phase 4)
-  live/             # live game polling + inference          (Phase 5)
-  api/              # Flask + SocketIO server                (Phase 6)
+  models/           # split, preprocessing, models, inference (Phases 4-5)
+  live/             # live game polling                       (future phase)
+  api/              # Flask + SocketIO server                 (future phase)
 
 scripts/            # runnable entry points
 tests/              # pytest suite
@@ -166,11 +166,16 @@ python -m pytest -v
 # Phase 3: rebuild and independently verify processed game states
 python scripts/process_game_states.py --seasons 2021-22 2022-23 2023-24
 python scripts/verify_game_states.py --seasons 2021-22 2022-23 2023-24
+
+# Phases 4-5: audit/tune without test, then run the frozen final evaluation
+python scripts/analyze_modeling_dataset.py
+python scripts/tune_win_probability_model.py
+python scripts/finalize_model_evaluation.py
 ```
 
-`requirements.txt` holds the Phase 1-3 runtime plus test dependencies. PyArrow
-is used for typed Parquet output; PyTorch and Flask are deferred until the
-phases that actually use them.
+`requirements.txt` holds the Phase 1-5 runtime plus test dependencies. PyArrow
+provides typed Parquet output; scikit-learn supplies the logistic baseline and
+PyTorch supplies the selected MLP. Web-server dependencies remain deferred.
 
 ## Project status
 
@@ -179,9 +184,10 @@ phases that actually use them.
 | 1 | Project setup + nba_api proof of concept | ✅ Complete |
 | 2 | Bulk multi-season downloader (cache, resume, retries) | ✅ Complete (three seasons) |
 | 3 | Feature engineering + possession engine | ✅ Complete (three seasons) |
-| 4 | Baseline model, PyTorch MLP, evaluation | ⬜ Not started |
-| 5 | Live game polling + inference | ⬜ Not started |
-| 6 | Flask + SocketIO + dashboard | ⬜ Not started |
+| 4 | Leakage-safe chronological training dataset | ✅ Complete |
+| 5 | Baselines, PyTorch MLP, calibration analysis, evaluation + inference | ✅ Complete |
+| 6 | Live game polling | ⬜ Not started |
+| 7 | Flask + SocketIO + dashboard | ⬜ Not started |
 
 ### What Phase 1 established
 
@@ -224,3 +230,13 @@ score, and reconstructs known possession for 93.57% of states without guessing
 when raw team ownership is absent. See [docs/FEATURE_ENGINEERING.md](docs/FEATURE_ENGINEERING.md),
 [docs/EVENT_SCHEMA.md](docs/EVENT_SCHEMA.md), and
 [docs/PHASE3_REPORT.md](docs/PHASE3_REPORT.md).
+
+### What Phases 4 and 5 add
+
+A season-isolated modeling pipeline trains on 2021-22, selects choices on
+2022-23, and evaluates once on 2023-24. It preserves unknown-possession states
+without guessing, fits preprocessing on train only, compares constant and
+logistic baselines, and saves a 2,817-parameter PyTorch MLP behind a reusable
+one-state inference interface. On the held-out season the MLP reaches Brier
+0.163341 and log loss 0.482660. See [docs/MODELING.md](docs/MODELING.md) and
+[docs/PHASE5_REPORT.md](docs/PHASE5_REPORT.md).

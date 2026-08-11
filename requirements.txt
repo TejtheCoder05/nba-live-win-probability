@@ -1,8 +1,10 @@
-# PyTorch, Flask, and Flask-SocketIO are added in later phases, when they
-# are actually used. Versions are pinned to the verified local environment.
+# Runtime and test dependencies pinned to the verified local environment.
 
 nba_api==1.11.4
 pandas==3.0.5
 numpy==2.5.2
 pytest==9.1.1
 pyarrow==25.0.1
+scikit-learn==1.9.0
+torch==2.13.0
+matplotlib==3.11.1

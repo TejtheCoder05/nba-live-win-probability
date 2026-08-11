@@ -20,6 +20,7 @@ PLAY_BY_PLAY_DIR = RAW_DIR / "playbyplay"
 MANIFEST_DIR = RAW_DIR / "manifest"
 
 ARTIFACTS_DIR = PROJECT_ROOT / "artifacts"
+MODEL_ARTIFACT_DIR = ARTIFACTS_DIR / "win_probability_v1"
 TESTS_FIXTURE_DIR = PROJECT_ROOT / "tests" / "fixtures"
 
 
