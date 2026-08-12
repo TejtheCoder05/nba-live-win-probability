@@ -68,7 +68,7 @@ class GameState:
     away_team_fouls_period: int
     foul_marker_team_count: int | None
     foul_marker_matches: int | None
-    home_win: int
+    home_win: int | None
 
     def as_dict(self) -> dict[str, Any]:
         return asdict(self)

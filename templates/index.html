@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080d18">
+  <title>NBA Live Win Probability</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+  <main class="shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">COURTSIDE SIGNAL</p>
+        <h1>NBA Win Probability</h1>
+      </div>
+      <div class="status-cluster">
+        <span id="modeBadge" class="badge">Loading</span>
+        <span class="connection"><i id="connectionDot"></i><span id="connectionText">Connecting</span></span>
+      </div>
+    </header>
+
+    <section id="notice" class="notice hidden" role="status"></section>
+    <section id="emptyState" class="empty-state hidden">
+      <p class="eyebrow">NO GAMES AVAILABLE</p>
+      <h2>The court is quiet right now.</h2>
+      <p>Switch to replay mode for the verified demo, or check live mode again when games are scheduled.</p>
+    </section>
+
+    <div id="dashboard" class="dashboard hidden">
+      <section class="scoreboard panel">
+        <div class="game-meta">
+          <select id="gameSelect" aria-label="Select game"></select>
+          <div><strong id="period">—</strong><span id="clock">—</span></div>
+          <span id="gameStatus">Waiting</span>
+        </div>
+        <div class="matchup">
+          <article class="team away">
+            <span class="team-role">AWAY</span>
+            <div id="awayMark" class="team-mark">—</div>
+            <p id="awayCity">—</p>
+            <h2 id="awayName">Away</h2>
+            <strong id="awayScore">0</strong>
+          </article>
+          <div class="versus"><span>VS</span></div>
+          <article class="team home">
+            <span class="team-role">HOME</span>
+            <div id="homeMark" class="team-mark">—</div>
+            <p id="homeCity">—</p>
+            <h2 id="homeName">Home</h2>
+            <strong id="homeScore">0</strong>
+          </article>
+        </div>
+      </section>
+
+      <section class="probability panel">
+        <div class="section-heading">
+          <div><p class="eyebrow">LIVE MODEL SIGNAL</p><h2>Win probability</h2></div>
+          <span id="lastUpdated">—</span>
+        </div>
+        <div class="prob-readout">
+          <div><span id="awayCode">AWAY</span><strong id="awayProbability">50.0%</strong></div>
+          <div class="home-readout"><span id="homeCode">HOME</span><strong id="homeProbability">50.0%</strong></div>
+        </div>
+        <div class="prob-track" aria-label="Win probability split">
+          <div id="awayBar" class="away-bar"></div>
+          <div id="homeBar" class="home-bar"></div>
+          <i class="midline"></i>
+        </div>
+        <div class="chart-wrap"><canvas id="probabilityChart" height="180"></canvas></div>
+        <p id="finalNote" class="final-note hidden">Official final result applied at the product layer. Raw model output remains unchanged.</p>
+      </section>
+
+      <section class="details panel">
+        <div class="section-heading"><div><p class="eyebrow">ON-COURT STATE</p><h2>Game context</h2></div></div>
+        <dl class="stat-grid">
+          <div><dt>Possession</dt><dd id="possession">Unknown</dd></div>
+          <div><dt>Score differential</dt><dd id="scoreDiff">0</dd></div>
+          <div><dt id="awayFoulsLabel">Away fouls</dt><dd id="awayFouls">0</dd></div>
+          <div><dt id="homeFoulsLabel">Home fouls</dt><dd id="homeFouls">0</dd></div>
+        </dl>
+        <div id="replayControls" class="replay-controls hidden">
+          <button data-action="start">Play</button>
+          <button data-action="pause" class="secondary">Pause</button>
+          <button data-action="step" class="secondary">Step</button>
+          <button data-action="reset" class="secondary">Reset</button>
+          <label>Speed
+            <select id="speedSelect"><option>1</option><option selected>4</option><option>8</option><option>12</option><option>20</option></select>
+          </label>
+          <span id="replayProgress">0 / 0 actions</span>
+        </div>
+      </section>
+
+      <section class="plays panel">
+        <div class="section-heading"><div><p class="eyebrow">PLAY FEED</p><h2>Recent events</h2></div><span id="sourceLabel">—</span></div>
+        <ol id="playList" class="play-list"></ol>
+      </section>
+    </div>
+  </main>
+  <script src="{{ url_for('static', filename='vendor/socket.io.min.js', v='4.8.1-full') }}"></script>
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

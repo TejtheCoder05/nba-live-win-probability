@@ -21,11 +21,11 @@ class GameProcessingResult:
     emitted_states: int
     known_possession_states: int
     unknown_possession_states: int
-    final_score_matches: bool
+    final_score_matches: bool | None
     reconstructed_final_home_score: int
     reconstructed_final_away_score: int
-    expected_final_home_score: int
-    expected_final_away_score: int
+    expected_final_home_score: int | None
+    expected_final_away_score: int | None
     foul_markers_checked: int
     foul_markers_matched: int
     foul_marker_discrepancies: list[dict[str, Any]] = field(default_factory=list)
@@ -64,6 +64,8 @@ def _apply_nullable_dtypes(frame: pd.DataFrame) -> pd.DataFrame:
     ]
     for column in nullable_ints:
         frame[column] = frame[column].astype("Int64")
+    if frame["home_win"].isna().any():
+        frame["home_win"] = frame["home_win"].astype("Int64")
     return frame
 
 
@@ -74,15 +76,16 @@ def process_game(
     game_id: str,
     home_team_id: int,
     away_team_id: int,
-    expected_home_score: int,
-    expected_away_score: int,
-    home_win: int,
+    expected_home_score: int | None = None,
+    expected_away_score: int | None = None,
+    home_win: int | None = None,
 ) -> tuple[pd.DataFrame, GameProcessingResult]:
     """Process one game in raw list order and return emitted states + metrics.
 
     The expected final score is not consulted until every event has been
     processed. It therefore validates reconstruction but cannot influence an
-    intermediate feature.
+    intermediate feature. Live replay omits expected scores and outcome because
+    neither exists for an in-progress game; historical callers remain unchanged.
     """
     possession = PossessionEngine(home_team_id, away_team_id)
     fouls = TeamFoulTracker(home_team_id, away_team_id)
@@ -197,13 +200,15 @@ def process_game(
             away_team_fouls_period=foul_state.away,
             foul_marker_team_count=foul_state.marker_count,
             foul_marker_matches=foul_state.marker_matches,
-            home_win=int(home_win),
+            home_win=None if home_win is None else int(home_win),
         )
         emitted.append(state.as_dict())
 
     frame = _apply_nullable_dtypes(pd.DataFrame(emitted))
     known = int(frame["possession_known"].sum()) if not frame.empty else 0
-    final_matches = home_score == int(expected_home_score) and away_score == int(expected_away_score)
+    final_matches = None
+    if expected_home_score is not None and expected_away_score is not None:
+        final_matches = home_score == int(expected_home_score) and away_score == int(expected_away_score)
     result = GameProcessingResult(
         game_id=str(game_id),
         raw_events=len(actions),
@@ -213,8 +218,8 @@ def process_game(
         final_score_matches=final_matches,
         reconstructed_final_home_score=home_score,
         reconstructed_final_away_score=away_score,
-        expected_final_home_score=int(expected_home_score),
-        expected_final_away_score=int(expected_away_score),
+        expected_final_home_score=(None if expected_home_score is None else int(expected_home_score)),
+        expected_final_away_score=(None if expected_away_score is None else int(expected_away_score)),
         foul_markers_checked=marker_checked,
         foul_markers_matched=marker_matched,
         foul_marker_discrepancies=marker_discrepancies,

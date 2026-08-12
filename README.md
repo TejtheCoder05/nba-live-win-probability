@@ -31,6 +31,7 @@ data/
     playbyplay/     #   {GAME_ID}.json.gz per game (gzipped raw response)
     manifest/       #   per-season download status + failures.jsonl
   processed/        # model-ready datasets
+  live/             # transient live-format development cache (gitignored)
 
 src/
   data/             # API retrieval ONLY - no feature or model logic
@@ -42,15 +43,15 @@ src/
     downloader.py   #   resumable bulk orchestration
   features/         # shared game-state + possession engine (Phase 3 complete)
   models/           # split, preprocessing, models, inference (Phases 4-5)
-  live/             # live game polling                       (future phase)
-  api/              # Flask + SocketIO server                 (future phase)
+  live/             # live endpoints, replay, application service + pollers
+  api/              # Flask factory, JSON routes + Socket.IO events
 
 scripts/            # runnable entry points
 tests/              # pytest suite
   fixtures/         #   committed sample data so tests run offline
 artifacts/          # trained weights + preprocessing artifacts (gitignored)
-templates/          # dashboard HTML                          (Phase 6)
-static/             # dashboard CSS + JS                      (Phase 6)
+templates/          # responsive dashboard HTML
+static/             # dashboard CSS + vanilla JS + local Socket.IO client
 docs/
   FIELD_MAP.md      # what the API actually returns, and what we must derive
   DOWNLOADER.md     # bulk downloader architecture and recovery
@@ -115,7 +116,7 @@ sigmoid at inference time.
 **No NBA-provided win-probability value is ever used as an input feature.** If
 one is available, it may later serve as an external benchmark only.
 
-## Planned live pipeline
+## Live application pipeline
 
 ```
 nba_api.live.nba.endpoints (scoreboard + play-by-play)
@@ -171,11 +172,23 @@ python scripts/verify_game_states.py --seasons 2021-22 2022-23 2023-24
 python scripts/analyze_modeling_dataset.py
 python scripts/tune_win_probability_model.py
 python scripts/finalize_model_evaluation.py
+
+# Phase 6: replay a real captured live-format game and verify same-game parity
+python scripts/replay_live_game.py
+python scripts/verify_live_parity.py
 ```
 
-`requirements.txt` holds the Phase 1-5 runtime plus test dependencies. PyArrow
-provides typed Parquet output; scikit-learn supplies the logistic baseline and
-PyTorch supplies the selected MLP. Web-server dependencies remain deferred.
+Start the verified authentic replay locally:
+
+```bash
+python scripts/run_app.py --mode replay
+```
+
+Then open <http://127.0.0.1:5000>. Live mode is available with
+`python scripts/run_app.py --mode live`, but the NBA CDN returned HTTP 403 in
+this development environment; active-game continuous polling still needs an
+environment where that CDN is reachable. See
+[docs/APPLICATION.md](docs/APPLICATION.md) for configuration and API details.
 
 ## Project status
 
@@ -186,8 +199,8 @@ PyTorch supplies the selected MLP. Web-server dependencies remain deferred.
 | 3 | Feature engineering + possession engine | ✅ Complete (three seasons) |
 | 4 | Leakage-safe chronological training dataset | ✅ Complete |
 | 5 | Baselines, PyTorch MLP, calibration analysis, evaluation + inference | ✅ Complete |
-| 6 | Live game polling | ⬜ Not started |
-| 7 | Flask + SocketIO + dashboard | ⬜ Not started |
+| 6 | Live ingestion, adapter/replay, historical/live feature parity | ✅ Complete |
+| 7 | Flask + SocketIO + dashboard | ✅ Complete (verified replay; live CDN access pending) |
 
 ### What Phase 1 established
 
@@ -240,3 +253,26 @@ logistic baselines, and saves a 2,817-parameter PyTorch MLP behind a reusable
 one-state inference interface. On the held-out season the MLP reaches Brier
 0.163341 and log loss 0.482660. See [docs/MODELING.md](docs/MODELING.md) and
 [docs/PHASE5_REPORT.md](docs/PHASE5_REPORT.md).
+
+### What Phase 6 adds
+
+A source-specific adapter converts real `nba_api.live` PlayByPlay actions into
+the same canonical action contract consumed by the Phase 3 state engine. A
+deterministic replay harness then emits the exact frozen ten-feature vector and
+calls the unchanged predictor. On real same-game historical/live responses,
+428 aligned states have 100% score, clock, regulation/OT, and foul parity;
+possession knownness agrees on 98.13%, with explained differences where the
+live feed has richer team-rebound ownership. See
+[docs/LIVE_DATA.md](docs/LIVE_DATA.md) and
+[docs/PHASE6_REPORT.md](docs/PHASE6_REPORT.md).
+
+### What Phase 7 adds
+
+A Flask application loads the frozen predictor once, exposes normalized JSON
+state, and streams changed states through Socket.IO. Viewers of one game share
+one safe background poller. The responsive vanilla-JavaScript dashboard shows
+score, clock, probabilities, history, recent plays, possession and fouls. An
+authentic 610-action replay exercises the same adapter → state → model →
+WebSocket path and finishes 99–125 with the official FINAL override isolated
+from raw inference. See [docs/APPLICATION.md](docs/APPLICATION.md) and
+[docs/PHASE7_REPORT.md](docs/PHASE7_REPORT.md).

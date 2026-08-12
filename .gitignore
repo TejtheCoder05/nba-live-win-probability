@@ -43,8 +43,10 @@ Thumbs.db
 # so they are not committed. The directory structure is kept via .gitkeep.
 data/raw/**
 data/processed/**
+data/live/**
 !data/raw/**/
 !data/processed/**/
+!data/live/**/
 !data/**/.gitkeep
 
 # --- Trained model artifacts ---
