@@ -1,0 +1,42 @@
+{
+  "binary_features": [
+    "home_possession",
+    "is_overtime",
+    "possession_known"
+  ],
+  "feature_names": [
+    "score_differential",
+    "period",
+    "seconds_remaining_period",
+    "seconds_remaining_regulation",
+    "is_overtime",
+    "overtime_number",
+    "home_possession",
+    "possession_known",
+    "home_team_fouls_period",
+    "away_team_fouls_period"
+  ],
+  "fitted_season": "2021-22",
+  "imputations": {
+    "home_possession": 0.5
+  },
+  "means": {
+    "away_team_fouls_period": 2.26941255485658,
+    "home_team_fouls_period": 2.2728165829564984,
+    "overtime_number": 0.006814313604431911,
+    "period": 2.519594019589848,
+    "score_differential": 0.8871393649151496,
+    "seconds_remaining_period": 343.5037085551236,
+    "seconds_remaining_regulation": 1413.56624443091
+  },
+  "scales": {
+    "away_team_fouls_period": 1.9417753724464955,
+    "home_team_fouls_period": 1.9386411373541186,
+    "overtime_number": 0.0948226933146525,
+    "period": 1.1301893795059197,
+    "score_differential": 11.715110854057926,
+    "seconds_remaining_period": 212.30227791141047,
+    "seconds_remaining_regulation": 835.8047734993806
+  },
+  "version": 1
+}

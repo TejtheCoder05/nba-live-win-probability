@@ -129,6 +129,15 @@ class GameService:
     def mode(self) -> str:
         return self.config.mode
 
+    @property
+    def ready(self) -> bool:
+        """Application readiness is local and does not require NBA CDN access."""
+        if self.predictor is None:
+            return False
+        return self.mode == "live" or (
+            self._replay_raw is not None and self._replay_game is not None
+        )
+
     def game_exists(self, game_id: str) -> bool:
         try:
             normalized = validate_game_id(game_id)

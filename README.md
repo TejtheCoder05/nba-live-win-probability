@@ -47,6 +47,8 @@ src/
   api/              # Flask factory, JSON routes + Socket.IO events
 
 scripts/            # runnable entry points
+Dockerfile           # minimal CPU production image
+railway.json          # Railway Docker + health-check configuration
 tests/              # pytest suite
   fixtures/         #   committed sample data so tests run offline
 artifacts/          # trained weights + preprocessing artifacts (gitignored)
@@ -201,6 +203,7 @@ environment where that CDN is reachable. See
 | 5 | Baselines, PyTorch MLP, calibration analysis, evaluation + inference | ✅ Complete |
 | 6 | Live ingestion, adapter/replay, historical/live feature parity | ✅ Complete |
 | 7 | Flask + SocketIO + dashboard | ✅ Complete (verified replay; live CDN access pending) |
+| 8 | Docker + CI/CD + cloud deployment | 🚧 Docker verified; GitHub CI verification pending |
 
 ### What Phase 1 established
 
@@ -276,3 +279,19 @@ authentic 610-action replay exercises the same adapter → state → model →
 WebSocket path and finishes 99–125 with the official FINAL override isolated
 from raw inference. See [docs/APPLICATION.md](docs/APPLICATION.md) and
 [docs/PHASE7_REPORT.md](docs/PHASE7_REPORT.md).
+
+### Phase 8 infrastructure
+
+The production path uses a non-root Python 3.12 slim container, CPU-only
+PyTorch, and one threaded Gunicorn worker compatible with Flask-SocketIO. CI
+verifies the frozen model hash, full offline suite, compilation, dependency
+integrity, Docker build, and a containerized WebSocket replay on pull requests
+and `main`. The local production container is verified through the authentic
+99–125 replay. Railway configuration selects the Dockerfile, health endpoint,
+graceful shutdown, and restart behavior. Railway deployment remains paused until
+GitHub Actions passes; its **Wait for CI** setting must be enabled when the
+repository is connected. See
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) and
+[docs/PHASE8_REPORT.md](docs/PHASE8_REPORT.md) for commands, current verification
+status, and the explicit Railway account boundary still preventing public
+deployment.

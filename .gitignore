@@ -53,6 +53,11 @@ data/live/**
 # Model weights, scalers, and feature metadata are build outputs.
 artifacts/**
 !artifacts/.gitkeep
+!artifacts/win_probability_v1/
+artifacts/win_probability_v1/**
+!artifacts/win_probability_v1/best_model.pt
+!artifacts/win_probability_v1/model_config.json
+!artifacts/win_probability_v1/preprocessing.json
 
 # NOTE: tests/fixtures/ is intentionally NOT ignored. It holds a small,
 # committed sample of real play-by-play so the test suite runs offline

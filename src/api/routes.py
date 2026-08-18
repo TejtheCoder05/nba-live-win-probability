@@ -26,7 +26,15 @@ def dashboard():
 
 @blueprint.get("/api/health")
 def health():
-    return jsonify({"status": "ok", "mode": _service().mode})
+    service = _service()
+    return jsonify(
+        {
+            "status": "ready",
+            "mode": service.mode,
+            "model_loaded": service.predictor is not None,
+            "service_ready": service.ready,
+        }
+    )
 
 
 @blueprint.get("/api/games")

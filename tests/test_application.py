@@ -6,6 +6,7 @@ from dataclasses import replace
 import pytest
 
 from src.api import create_app
+from src.api.config import AppConfig
 from src.live.scoreboard import LiveGame, LiveTeam, ScoreboardSnapshot
 from src.live.play_by_play import parse_live_play_by_play
 from src.live.scoreboard import normalize_game_details
@@ -51,7 +52,26 @@ def test_dashboard_and_health_are_available(app) -> None:
     )
     html = page.get_data(as_text=True)
     assert html.index("vendor/socket.io.min.js") < html.index("js/app.js")
-    assert client.get("/api/health").json == {"mode": "replay", "status": "ok"}
+    assert client.get("/api/health").json == {
+        "mode": "replay",
+        "model_loaded": True,
+        "service_ready": True,
+        "status": "ready",
+    }
+
+
+def test_cloud_host_and_port_environment_fallbacks() -> None:
+    cloud = AppConfig.from_env(
+        {"NBA_APP_MODE": "replay", "NBA_APP_ENV": "production", "HOST": "0.0.0.0", "PORT": "8080"}
+    )
+    assert cloud.environment == "production"
+    assert cloud.host == "0.0.0.0"
+    assert cloud.port == 8080
+    explicit = AppConfig.from_env(
+        {"NBA_APP_HOST": "127.0.0.2", "HOST": "0.0.0.0", "NBA_APP_PORT": "5001", "PORT": "8080"}
+    )
+    assert explicit.host == "127.0.0.2"
+    assert explicit.port == 5001
 
 
 def test_games_and_state_api_are_json_serializable(app) -> None:

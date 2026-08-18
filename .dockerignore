@@ -1,0 +1,44 @@
+.git
+.github
+railway.json
+.venv
+venv
+env
+.env
+*.env
+!example.env
+**/__pycache__
+**/*.py[cod]
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.coverage
+htmlcov
+.DS_Store
+*.log
+
+# Historical/training material is never required to serve predictions.
+data
+artifacts/**
+!artifacts/win_probability_v1/
+!artifacts/win_probability_v1/best_model.pt
+!artifacts/win_probability_v1/model_config.json
+!artifacts/win_probability_v1/preprocessing.json
+
+# Only the authentic live-format replay payload and game metadata are runtime inputs.
+tests/**
+!tests/fixtures/
+!tests/fixtures/live/
+!tests/fixtures/live/playbyplay_0022000001.json
+!tests/fixtures/live/game_details_0022000001.json
+
+# Keep only production verification entrypoints from development scripts.
+scripts/**
+!scripts/verify_model_artifact.py
+!scripts/verify_runtime.py
+
+docs
+.idea
+.vscode
+*.swp
+artifacts/application_phase7_latency.json
