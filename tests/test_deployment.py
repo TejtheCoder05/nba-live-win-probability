@@ -53,7 +53,7 @@ def test_railway_config_uses_docker_healthcheck_and_safe_restart() -> None:
         "healthcheckTimeout": 120,
         "restartPolicyType": "ON_FAILURE",
         "restartPolicyMaxRetries": 10,
-        "drainingSeconds": "30",
+        "drainingSeconds": 30,
     }
 
 
