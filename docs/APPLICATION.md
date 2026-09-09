@@ -34,6 +34,9 @@ Brooklyn, sourced from the authentic live-format fixture committed during
 Phase 6. It progressively passes through the real adapter, state engine,
 preprocessor, frozen model, and Socket.IO path; it is not a frontend simulation.
 
+The same verified replay is publicly deployed at
+[https://nba-live-win-probability-production.up.railway.app](https://nba-live-win-probability-production.up.railway.app).
+
 Live mode is separate:
 
 ```bash

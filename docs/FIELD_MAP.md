@@ -2,7 +2,7 @@
 
 This document records the **observed** fields from `nba_api` 1.11.4, verified
 against a real game (`GAME_ID 0022300061`, LAL @ DEN, 2023-10-24, 473 events),
-and maps them to the features we intend to build.
+and maps them to the implemented state and model fields.
 
 It exists because the difference between "the API gives us this" and "we must
 reconstruct this" determines how much work each feature costs. Guessing at
@@ -24,13 +24,13 @@ description   actionType    subType       videoAvailable shotValue   actionId
 > which is a reason to inspect responses directly rather than trusting the
 > package's metadata.
 >
-> This observation says nothing about `nba_api.live.nba.endpoints`. No live
-> endpoint has been called at any point so far; the live play-by-play schema
-> will be inspected on its own terms in Phase 5.
+> This historical Phase 1 observation says nothing about
+> `nba_api.live.nba.endpoints`. Phase 6 later inspected that separate schema
+> directly and documented it in [LIVE_DATA.md](LIVE_DATA.md).
 
 ## Feature source map
 
-| Planned feature | Source field(s) | Status | Notes |
+| State/model field | Source field(s) | Status | Notes |
 |---|---|---|---|
 | home score | `scoreHome` | **direct** | string; blank except on scoring plays → forward-fill |
 | away score | `scoreAway` | **direct** | same |
@@ -43,7 +43,7 @@ description   actionType    subType       videoAvailable shotValue   actionId
 | shot value (2 vs 3) | `shotValue`, `isFieldGoal`, `shotResult` | **direct** | |
 | team fouls this period | `description` regex, or counted | **reconstruct** | see "Team fouls" |
 | timeouts remaining | `Timeout` events | **reconstruct** | team attribution is awkward |
-| possession | — | **reconstruct** | no field exists; Phase 3 engine |
+| possession | — | **reconstruct** | no historical field exists; implemented by the shared engine |
 | `home_win` label | `LeagueGameLog.PTS` + `MATCHUP` | **direct** | from final score, not from any NBA win-probability figure |
 
 ## Observed formats and their traps
@@ -155,9 +155,9 @@ Two problems:
    `description`, and inconsistently cased (`NUGGETS` vs `Lakers`).
 2. The trailing counter changes format mid-game (`Full 1` vs `Reg.1`).
 
-Timeouts are therefore the **lowest-confidence** planned feature. The plan is to
-derive them, validate against NBA allowances (7 per team per game), and drop the
-feature if it proves unreliable rather than feed the model a noisy input.
+Timeouts were therefore treated as a low-confidence candidate and excluded from
+the selected V1 feature set. The project does not feed unreliable timeout
+attribution into the frozen model.
 
 ### Rebounds — offensive vs defensive is NOT directly labelled
 
@@ -182,7 +182,7 @@ which gives a second, independent signal to validate against.
 ### Possession — no field exists at all
 
 There is no possession column, and possession does **not** simply alternate.
-Phase 3 must handle made field goals, turnovers, defensive vs offensive
+The Phase 3 engine handles made field goals, turnovers, defensive vs offensive
 rebounds, free-throw sequences (only the last FT of a set changes possession),
 missed shots, jump balls, and period boundaries.
 

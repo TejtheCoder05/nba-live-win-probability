@@ -206,13 +206,15 @@ board = fetch_current_scoreboard()
 snapshot = fetch_live_play_by_play(game_id)
 ```
 
-## Final status and future serving
+## Serving status and final-game behavior
 
-The replay CLI never modifies model probabilities. Once a future serving layer
-has official `gameStatus == 3`, product logic may display 100% for the official
-winner and 0% for the loser. That is an after-final display rule, not a training
-feature or model change. The eventual WebSocket layer should consume
-`ScoreboardSnapshot`, pass changed PBP snapshots into `LiveReplayEngine`, and
-publish its latest raw-model probability. That serving work is intentionally
-not implemented here.
+The replay CLI never modifies model probabilities. The Phase 7 serving layer
+consumes `ScoreboardSnapshot`, passes changed PBP snapshots into the shared
+reconstruction and inference path, and publishes raw-model probability through
+Socket.IO. When official `gameStatus == 3`, product logic displays 100% for the
+official winner and 0% for the loser. That is an after-final display rule, not
+a training feature or model change.
 
+Phase 8 publicly deployed and verified this path in replay mode. Actual
+continuous Railway-to-`cdn.nba.com` ScoreBoard/PlayByPlay access remains
+unverified, so active-game ingestion is not claimed.

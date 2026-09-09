@@ -131,7 +131,8 @@ NBA endpoints.
 
 - The official live CDN was HTTP 403 from the development environment, so an
   actually active game could not be observed directly during implementation.
-  Production network access still needs an environment-level smoke check.
+  Cloud CDN validation remains a future enhancement and is not included in the
+  verified portfolio claim.
 - The real replay fixture is a completed regulation game. Overtime scoreboard
   normalization and the shared overtime clock formula are tested, but the
   replay fixture itself has no overtime actions.
@@ -139,8 +140,9 @@ NBA endpoints.
   the code does not attempt a more complex incremental event rollback.
 - Unexpected event types are logged/preserved as metadata and do not invent
   possession changes.
-- The frozen model still does not snap close final games to 0%/100%. A future
-  product layer may override display only after official final status.
+- The frozen model does not snap completed games to 0%/100%. The later Phase 7
+  product layer implements that display override only after official final
+  status, leaving raw inference unchanged.
 
 ## Interview explanation
 
@@ -161,5 +163,7 @@ NBA endpoints.
 8. Final certainty is official product state, not a historical model feature;
    applying it only after status FINAL avoids future-information leakage.
 
-Phase 6 stops here. Flask, Socket.IO, WebSockets, frontend/dashboard, and
-deployment remain unimplemented pending approval.
+Phase 6 originally stopped at this boundary. Phases 7 and 8 subsequently added
+Flask, Socket.IO/WebSockets, the dashboard, Docker, GitHub Actions, and the
+public Railway replay deployment without changing the Phase 6 adapter or frozen
+model.

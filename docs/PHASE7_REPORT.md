@@ -108,24 +108,23 @@ gitignored).
   99–125.
 - The server was stopped with its poller released; the full suite was rerun.
 
-Browser automation was unavailable. Page assets, responsive CSS, DOM update
-paths, and canvas renderer were checked programmatically; the documented manual
-desktop/narrow-width checklist remains the final visual check on another
-machine/browser.
+Browser automation was unavailable during Phase 7. Page assets, responsive CSS,
+DOM update paths, and the canvas renderer were checked programmatically. Phase
+8 later added manual verification of the publicly deployed Railway dashboard.
 
 ## Limitations
 
 - `cdn.nba.com` returned HTTP 403 in this development environment. Continuous
   polling of an actually active NBA game is **not verified**, so the project is
-  not yet claimed as production live end to end.
+  not claimed as production live end to end.
 - The committed replay is a completed regulation game; live overtime
   normalization and timing remain covered by Phase 6 tests, not this replay.
 - Possession remains deliberately unknown when evidence is insufficient; the
   model receives the frozen neutral encoding rather than a guess.
 - The historical model does not itself snap at 0:00. Official FINAL is handled
   only in the application display layer.
-- Visual browser validation is manual because no browser automation environment
-  was available.
+- The public Railway replay dashboard was manually validated in Safari during
+  Phase 8; browser automation is not part of the acceptance suite.
 
 ## Interview explanation
 
@@ -153,5 +152,6 @@ machine/browser.
    PlayByPlay loops must run against an active game in an environment where the
    NBA CDN is reachable, including transient-failure observation over time.
 
-Phase 7 stops at the verified local application. Deployment, Docker, CI/CD,
-authentication, databases, and frontend frameworks are intentionally excluded.
+Phase 7 originally stopped at the verified local application. Phase 8 later
+added Docker, GitHub Actions, and a public Railway deployment of the same replay
+path. Databases and frontend frameworks remain unnecessary for this design.
