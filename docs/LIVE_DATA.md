@@ -31,11 +31,42 @@ Both use `https://cdn.nba.com/static/json/liveData/{endpoint}` and expose the
 decoded response via `get_dict()`. `ScoreBoard.games` and `PlayByPlay.actions`
 are thin `Endpoint.DataSet` wrappers around the corresponding lists.
 
-The official CDN returned HTTP 403 Access Denied from the Phase 6 development
-environment. The production wrappers handle that failure without crashing.
-Because the scoreboard could not be decoded, current game availability could
-not be established; it is not falsely reported as “zero games.” Empty
-scoreboards are supported and tested independently.
+The production wrappers handle endpoint failure without crashing. When the
+scoreboard cannot be decoded, current game availability is not established and
+is never falsely reported as “zero games.” Empty scoreboards are supported and
+tested independently.
+
+## Live CDN request headers
+
+`nba_api` 1.11.4 sends a default header set (`STATS_HEADERS`) whose user-agent
+is a 2020-era Chrome 87 build and which omits `Origin` and `Referer`. The Akamai
+edge in front of `cdn.nba.com` now answers that set with HTTP 403 Access Denied.
+This is what produced the 403 recorded in the Phase 6 and Phase 7 reports; it is
+a header-fingerprint rejection, not a network, IP, or geographic block.
+
+`src/live/headers.py` defines the verified replacement set and both live clients
+pass it through the existing `endpoint_factory` seam into the official
+`headers=` constructor parameter:
+
+```python
+from src.live.headers import live_request_headers
+
+endpoint_factory(timeout=timeout, headers=live_request_headers())
+```
+
+The set was verified from inside the deployed Railway container, interleaved
+against the same edge in the same instants so the two differed only by headers:
+
+| Header set | Result |
+|---|---:|
+| `nba_api` `STATS_HEADERS` default | HTTP 403 |
+| `LIVE_REQUEST_HEADERS` | HTTP 200 |
+
+`ScoreBoard(headers=LIVE_REQUEST_HEADERS)` succeeded repeatedly and returned a
+decoded payload. The set is verified as a group; individual members are not
+independently load-bearing, so it is passed whole rather than trimmed.
+`live_request_headers()` returns a fresh copy per call so an endpoint cannot
+mutate the shared constant.
 
 The offline fixtures are authentic public captures pinned to repository
 commits, not schemas synthesized from package examples. Their provenance is in
@@ -215,6 +246,10 @@ Socket.IO. When official `gameStatus == 3`, product logic displays 100% for the
 official winner and 0% for the loser. That is an after-final display rule, not
 a training feature or model change.
 
-Phase 8 publicly deployed and verified this path in replay mode. Actual
-continuous Railway-to-`cdn.nba.com` ScoreBoard/PlayByPlay access remains
-unverified, so active-game ingestion is not claimed.
+Phase 8 publicly deployed and verified this path in replay mode.
+
+Railway-to-`cdn.nba.com` connectivity is verified: `ScoreBoard` succeeds from
+inside the deployed container with the corrected headers. Active-game ingestion
+remains unverified because the successful scoreboard request occurred during the
+NBA offseason and correctly returned zero games, so no live `PlayByPlay` stream
+existed to drive the path. Active-game ingestion is therefore not claimed.

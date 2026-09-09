@@ -15,6 +15,7 @@ from typing import Any, Callable, Mapping
 from nba_api.live.nba.endpoints import playbyplay
 
 from src.live.errors import LiveEndpointError, LiveSchemaError
+from src.live.headers import live_request_headers
 from src.paths import LIVE_DATA_DIR, ensure_dir
 
 logger = logging.getLogger(__name__)
@@ -100,7 +101,9 @@ class LivePlayByPlayClient:
             if delay > 0:
                 time.sleep(delay)
         try:
-            endpoint = self.endpoint_factory(game_id=normalized_id, timeout=self.timeout)
+            endpoint = self.endpoint_factory(
+                game_id=normalized_id, timeout=self.timeout, headers=live_request_headers()
+            )
             self._last_request_at = time.monotonic()
             raw = endpoint.get_dict()
             if not isinstance(raw, Mapping):

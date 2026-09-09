@@ -9,6 +9,7 @@ from typing import Any, Callable, Mapping
 from nba_api.live.nba.endpoints import scoreboard
 
 from src.live.errors import LiveSchemaError
+from src.live.headers import live_request_headers
 
 logger = logging.getLogger(__name__)
 
@@ -121,7 +122,7 @@ def fetch_current_scoreboard(
 ) -> ScoreboardSnapshot:
     """Fetch today's board; endpoint failures become an inspectable empty result."""
     try:
-        endpoint = endpoint_factory(timeout=timeout)
+        endpoint = endpoint_factory(timeout=timeout, headers=live_request_headers())
         raw = endpoint.get_dict()
         if not isinstance(raw, Mapping):
             raise LiveSchemaError("Live scoreboard endpoint returned a non-object response")

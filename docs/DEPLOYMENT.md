@@ -110,7 +110,7 @@ itself unhealthy.
 1. set up Python 3.12.10 with dependency caching;
 2. install CPU-only PyTorch and pinned dependencies;
 3. verify the frozen model SHA-256;
-4. run all 166 offline tests;
+4. run all 170 offline tests;
 5. compile `src`, `scripts`, and `tests`;
 6. run `pip check` and `git diff --check`;
 7. build the production image after quality checks pass;
@@ -147,19 +147,25 @@ Railway metrics during public acceptance showed approximately:
 The service returned to near-idle CPU after the replay. Resource values are
 observations from the acceptance window rather than capacity guarantees.
 
-## Live CDN limitation
+## Live CDN status
 
 The live `ScoreBoard`/`PlayByPlay` clients, schema adapter, full-response
 fingerprinting, deterministic reconstruction, and model inference path are
 implemented and tested with authentic captured NBA live-format responses.
 
-However, actual continuous Railway-to-`cdn.nba.com` access has **not** been
-verified. The CDN returned HTTP 403 in the original development environment,
-and no active NBA game has traversed the deployed ScoreBoard -> PlayByPlay ->
-adapter -> frozen model -> Socket.IO path. The project therefore makes no claim
-of currently processing active NBA games.
+Railway-to-`cdn.nba.com` connectivity is **verified**. From inside the deployed
+production container, DNS, TLS, and HTTP all succeed and `ScoreBoard` returns a
+decoded payload once the stale `nba_api` default headers are replaced with the
+set in `src/live/headers.py`. The earlier HTTP 403 was a header-fingerprint
+rejection at the Akamai edge, not a network, IP, or platform restriction. See
+[Live CDN headers](LIVE_DATA.md#live-cdn-request-headers).
 
-Production ScoreBoard/CDN validation remains an optional future enhancement.
+Active-game ingestion has **not** been verified. The successful scoreboard
+request occurred during the NBA offseason and correctly returned zero games, so
+no active game has traversed the deployed ScoreBoard -> PlayByPlay -> adapter ->
+frozen model -> Socket.IO path. The project therefore makes no claim of
+currently processing active NBA games, and the public demo stays in replay mode.
+
 An empty scoreboard is a valid result when no games are scheduled; only a
 successful request distinguishes that state from a network/CDN failure.
 

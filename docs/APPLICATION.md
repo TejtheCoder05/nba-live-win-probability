@@ -43,11 +43,13 @@ Live mode is separate:
 python scripts/run_app.py --mode live
 ```
 
-The official `cdn.nba.com` endpoints returned HTTP 403 in this development
-environment. Live mode therefore reports `Live NBA feed unavailable from this
-environment.` without a 500 or raw traceback. Replay mode is the reliable local
-demo. Continuous polling of an actually active game still must be verified in
-an environment where the CDN is reachable.
+`cdn.nba.com` is reachable from the deployed Railway container and `ScoreBoard`
+succeeds there with the corrected request headers in `src/live/headers.py`.
+Environments that the NBA edge still rejects report `Live NBA feed unavailable
+from this environment.` without a 500 or raw traceback, and replay mode remains
+the reliable local demo. Continuous polling of an actually active NBA game has
+not yet been verified, because connectivity was confirmed during the offseason
+when no game was in progress.
 
 ## Configuration
 

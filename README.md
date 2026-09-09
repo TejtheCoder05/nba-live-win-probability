@@ -8,7 +8,7 @@ an interactive browser dashboard over Socket.IO.
 **Live demo:** [https://nba-live-win-probability-production.up.railway.app](https://nba-live-win-probability-production.up.railway.app)
 
 The public demo runs a verified replay of authentic NBA live-format data. It is
-not presented as an active-game feed; see [Current limitation](#current-limitation).
+not presented as an active-game feed; see [Current status](#current-status).
 
 ## Verified results
 
@@ -23,7 +23,7 @@ not presented as an active-game feed; see [Current limitation](#current-limitati
 | Median single-state model inference | 0.316 ms |
 | Median backend state processing | 19.372 ms |
 | Authentic live-format replay states | 434 |
-| Automated tests | 166 |
+| Automated tests | 170 |
 
 Evaluation uses a held-out chronological season: train on 2021-22, select on
 2022-23, and test once on 2023-24. The raw PyTorch MLP outperformed the logistic
@@ -130,7 +130,7 @@ sets and avoids a subtle but severe form of outcome leakage. Preprocessing is
 fit on the training season only.
 
 Raw downloads and processed training datasets are intentionally excluded from
-Git. Small, authentic fixtures keep the 166-test suite deterministic and fully
+Git. Small, authentic fixtures keep the 170-test suite deterministic and fully
 offline.
 
 ## Dashboard and replay
@@ -221,22 +221,39 @@ templates/      dashboard HTML
 docs/           design decisions, schemas, phase reports, and deployment guide
 ```
 
-## Current limitation
+## Current status
 
 Replay mode is fully verified locally, in Docker, in GitHub Actions, and through
 the public Railway deployment. The `nba_api.live` ScoreBoard/PlayByPlay client,
 canonical adapter, fingerprint-based reconstruction, and failure handling are
 implemented and tested with authentic captured responses.
 
-Actual continuous Railway-to-`cdn.nba.com` polling has **not** been verified.
-The NBA CDN returned HTTP 403 from the original development environment, and no
-active NBA game has yet completed the production ScoreBoard -> PlayByPlay ->
-model -> WebSocket path. Accordingly, this repository does **not** claim that
-it currently processes active NBA games.
+**Verified**
 
-That cloud CDN validation is a future enhancement, not a dependency of the
-verified portfolio demo. The accurate description today is: **a deployed NBA
-win-probability application with a verified live-format replay pipeline and an
+- The deployed Railway container can reach `cdn.nba.com`. DNS, TLS, and HTTP
+  all succeed from inside the running production container.
+- `ScoreBoard` succeeds from that container and returns a decoded live payload
+  once the stale `nba_api` default headers are replaced. See
+  [Live CDN headers](docs/LIVE_DATA.md#live-cdn-request-headers).
+- The replay / live-format inference pipeline is deployed and verified end to
+  end: adapter -> state engine -> frozen model -> Socket.IO -> dashboard.
+
+**Not yet verified**
+
+- Active-game `PlayByPlay` ingestion.
+- Live canonical state generation during an actual NBA game.
+- Live model predictions during an actual NBA game.
+- Live WebSocket updates sourced from an actual active NBA game.
+
+The remaining gap is availability, not connectivity: the scoreboard was reached
+successfully during the NBA offseason, so it correctly returned zero games and
+no active game existed to drive the live path. Completing that validation
+requires a scheduled, in-progress NBA game.
+
+The public demo therefore stays in replay mode and this repository does **not**
+claim that it currently processes active NBA games. The accurate description
+today is: **a deployed NBA win-probability application with a verified
+live-format replay pipeline, verified live-CDN connectivity, and an
 architecture designed for live NBA ingestion.**
 
 ## Documentation

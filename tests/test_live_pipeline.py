@@ -13,6 +13,7 @@ from src.features.possession import PossessionEngine
 from src.features.processor import process_game
 from src.live.adapter import adapt_live_action, adapt_live_actions
 from src.live.errors import LiveEndpointError, LiveSchemaError
+from src.live.headers import LIVE_REQUEST_HEADERS, live_request_headers
 from src.live.parity import compare_state_frames
 from src.live.play_by_play import (
     LivePlayByPlayClient,
@@ -252,6 +253,61 @@ def test_client_wraps_endpoint_decode_or_timeout_failures() -> None:
     client = LivePlayByPlayClient(minimum_request_interval=0, endpoint_factory=Endpoint)
     with pytest.raises(LiveEndpointError, match="Could not fetch"):
         client.fetch("0022000001")
+
+
+class RecordingEndpoint:
+    """Capture constructor kwargs so header wiring is provable without network."""
+
+    last_kwargs: dict = {}
+
+    def __init__(self, **kwargs):
+        type(self).last_kwargs = kwargs
+
+    def get_dict(self):
+        return {"scoreboard": {"gameDate": "2026-09-09", "games": []}}
+
+
+def test_scoreboard_endpoint_is_constructed_with_browser_headers() -> None:
+    class Endpoint(RecordingEndpoint):
+        pass
+
+    fetch_current_scoreboard(endpoint_factory=Endpoint)
+    headers = Endpoint.last_kwargs["headers"]
+    assert headers == dict(LIVE_REQUEST_HEADERS)
+    assert "Chrome/120" in headers["User-Agent"]
+    assert headers["Origin"] == "https://www.nba.com"
+    assert headers["Referer"] == "https://www.nba.com/"
+
+
+def test_play_by_play_endpoint_is_constructed_with_browser_headers(live_raw) -> None:
+    class Endpoint(RecordingEndpoint):
+        def get_dict(self):
+            return live_raw
+
+    client = LivePlayByPlayClient(minimum_request_interval=0, endpoint_factory=Endpoint)
+    client.fetch("0022000001")
+    headers = Endpoint.last_kwargs["headers"]
+    assert headers == dict(LIVE_REQUEST_HEADERS)
+    assert Endpoint.last_kwargs["game_id"] == "0022000001"
+    assert "Chrome/120" in headers["User-Agent"]
+
+
+def test_live_headers_replace_the_stale_nba_api_defaults() -> None:
+    """Regression guard: the library defaults are what cdn.nba.com answers 403."""
+    from nba_api.live.nba.library.http import STATS_HEADERS
+
+    assert LIVE_REQUEST_HEADERS["User-Agent"] != STATS_HEADERS["User-Agent"]
+    assert "Chrome/87" in STATS_HEADERS["User-Agent"]
+    assert "Origin" not in STATS_HEADERS
+    assert "Referer" not in STATS_HEADERS
+
+
+def test_live_request_headers_returns_an_isolated_mutable_copy() -> None:
+    first = live_request_headers()
+    first["User-Agent"] = "mutated"
+    assert live_request_headers()["User-Agent"] == LIVE_REQUEST_HEADERS["User-Agent"]
+    with pytest.raises(TypeError):
+        LIVE_REQUEST_HEADERS["Origin"] = "mutated"  # type: ignore[index]
 
 
 def test_live_raw_caching_is_separate_and_atomic(live_raw, tmp_path) -> None:
