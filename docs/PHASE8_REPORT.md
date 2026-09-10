@@ -149,3 +149,45 @@ requirement of the completed replay portfolio application.
    a live game.
 10. The CDN limitation is stated directly because a tested adapter is not the
     same as verified active-game network ingestion.
+
+## Addendum — September 9, 2026
+
+The findings recorded above are preserved as written at the time of Phase 8.
+This addendum records a later verification result and does not revise them.
+
+**Railway-to-`cdn.nba.com` connectivity is verified.** Testing from inside the
+running production container confirmed that DNS, TLS, and HTTP all succeed
+against the NBA live CDN.
+
+**The earlier HTTP 403 was not a Railway network restriction.** It was traced to
+the stale default request headers in `nba_api` 1.11.4, whose `STATS_HEADERS` set
+carries a 2020-era Chrome 87 user-agent and omits `Origin` and `Referer`. The
+Akamai edge in front of `cdn.nba.com` rejects that header fingerprint. Measured
+from inside the deployed container, interleaved against the same edge so the two
+requests differed only by headers, the library default returned HTTP 403 while a
+modern browser-style set returned HTTP 200.
+
+**A minimal shared header implementation was added.** `src/live/headers.py`
+holds the verified set once, and the existing `ScoreBoard` and `PlayByPlay`
+clients pass it through their established `endpoint_factory` seam into the
+official `nba_api` `headers=` constructor parameter. The frozen model, feature
+order, possession semantics, foul semantics, adapter behavior, and replay
+determinism are unchanged.
+
+**The production ScoreBoard path now succeeds from Railway.** Calling
+`src.live.scoreboard.fetch_current_scoreboard()` inside the deployed container
+returned `game_date: '2026-09-09'`, `games: 0`, and `error: None`. The `error`
+field previously carried a `JSONDecodeError` from parsing the 403 HTML body, so
+`error: None` confirms a genuinely decoded live response rather than a masked
+failure.
+
+**Active-game validation remains future verification.** The verified request
+occurred during the NBA offseason, so the scoreboard correctly reported zero
+games and no live `PlayByPlay` stream existed to exercise the path. Full
+active-game `PlayByPlay` -> adapter -> canonical states -> frozen model ->
+Socket.IO validation is therefore still outstanding, and live NBA inference is
+still not claimed. The remaining gap is game availability, not connectivity.
+
+**Production remains in replay mode.** The public deployment continues to serve
+the deterministic, authentic live-format replay so the demo is reproducible for
+reviewers rather than dependent on the NBA schedule.
